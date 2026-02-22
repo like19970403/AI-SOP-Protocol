@@ -33,24 +33,38 @@ detect_type() {
     fi
 }
 
-echo ""
 DETECTED=$(detect_type)
-echo "🔍 自動偵測專案類型：$DETECTED"
-read -rp "確認類型（Enter 使用偵測值，或輸入 system/content/architecture）: " PROJECT_TYPE
-PROJECT_TYPE="${PROJECT_TYPE:-$DETECTED}"
+DEFAULT_NAME="$(basename "$(pwd)")"
 
-read -rp "專案名稱（Enter 使用目錄名）: " PROJECT_NAME
-PROJECT_NAME="${PROJECT_NAME:-$(basename "$(pwd)")}"
+# 偵測是否為互動式（curl | bash 時 stdin 不是 terminal）
+if [ -t 0 ]; then
+    echo ""
+    echo "🔍 自動偵測專案類型：$DETECTED"
+    read -rp "確認類型（Enter 使用偵測值，或輸入 system/content/architecture）: " PROJECT_TYPE
+    PROJECT_TYPE="${PROJECT_TYPE:-$DETECTED}"
 
-echo ""
-read -rp "啟用 RAG 知識庫？（y/N）: " ENABLE_RAG
-ENABLE_RAG="${ENABLE_RAG:-n}"
+    read -rp "專案名稱（Enter 使用目錄名 $DEFAULT_NAME）: " PROJECT_NAME
+    PROJECT_NAME="${PROJECT_NAME:-$DEFAULT_NAME}"
 
-read -rp "啟用 Guardrail 護欄？（y/N）: " ENABLE_GUARDRAIL
-ENABLE_GUARDRAIL="${ENABLE_GUARDRAIL:-n}"
+    echo ""
+    read -rp "啟用 RAG 知識庫？（y/N）: " ENABLE_RAG
+    ENABLE_RAG="${ENABLE_RAG:-n}"
 
-read -rp "HITL 等級（minimal/standard/strict，Enter 使用 standard）: " HITL_LEVEL
-HITL_LEVEL="${HITL_LEVEL:-standard}"
+    read -rp "啟用 Guardrail 護欄？（y/N）: " ENABLE_GUARDRAIL
+    ENABLE_GUARDRAIL="${ENABLE_GUARDRAIL:-n}"
+
+    read -rp "HITL 等級（minimal/standard/strict，Enter 使用 standard）: " HITL_LEVEL
+    HITL_LEVEL="${HITL_LEVEL:-standard}"
+else
+    echo ""
+    echo "📋 非互動模式，使用自動偵測值："
+    PROJECT_TYPE="$DETECTED"
+    PROJECT_NAME="$DEFAULT_NAME"
+    ENABLE_RAG="n"
+    ENABLE_GUARDRAIL="n"
+    HITL_LEVEL="standard"
+    echo "  type: $PROJECT_TYPE | name: $PROJECT_NAME | hitl: $HITL_LEVEL"
+fi
 
 echo ""
 echo "📥 安裝 AI-SOP-Protocol..."
@@ -154,16 +168,17 @@ fi
 echo ""
 echo "🎉 安裝完成！"
 echo ""
-echo "下一步："
-echo "  1. 編輯 .ai_profile 確認設定"
-echo "  2. 更新 docs/adr/ADR-001-*.md 填入實際技術棧"
-echo "  3. 更新 docs/architecture.md 繪製架構圖"
-echo "  4. 依專案需求調整 Makefile（build / test / deploy targets）"
+echo "啟動 Claude Code，輸入："
+echo ""
+echo "  請讀取 CLAUDE.md，依照 .ai_profile 載入對應 Profile。"
+echo "  然後幫我完成以下初始化："
+echo "  1. 確認 .ai_profile 設定是否正確"
+echo "  2. 依專案需求調整 Makefile（build / test / deploy targets）"
+echo "  3. 填寫 ADR-001 技術棧選型"
+echo "  4. 更新 docs/architecture.md"
+echo ""
 if [ "${ENABLE_RAG,,}" = "y" ]; then
-    echo "  5. pip install chromadb sentence-transformers"
-    echo "  6. make rag-index"
+    echo "RAG 已啟用，還需要："
+    echo "  pip install chromadb sentence-transformers && make rag-index"
+    echo ""
 fi
-echo ""
-echo "啟動 Claude Code 後，輸入："
-echo "  「請讀取 CLAUDE.md，依照 .ai_profile 載入對應 Profile」"
-echo ""
