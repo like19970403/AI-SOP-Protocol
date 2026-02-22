@@ -4,7 +4,7 @@
 
 set -euo pipefail
 
-PROTOCOL_REPO="https://github.com/YOUR_USERNAME/ai-sop-protocol"
+PROTOCOL_REPO="https://github.com/astroicers/AI-SOP-Protocol"
 PROTOCOL_DIR=".asp-tmp"
 
 # 跨平台 sed

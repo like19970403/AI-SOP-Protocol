@@ -6,10 +6,31 @@
 
 ---
 
+## 前置需求（選配，非必須）
+
+以下工具安裝在**使用者層**（`~/.claude/`），與 ASP 互補但獨立：
+
+| 工具 | 用途 | 安裝方式 |
+|------|------|----------|
+| [Superpowers](https://github.com/obra/superpowers) | 全域工作流（brainstorm → plan → execute） | `cp -r superpowers ~/.claude/plugins/` |
+| [antigravity-awesome-skills](https://github.com/sickn33/antigravity-awesome-skills) | 進階技能擴充 | `cp -r skills ~/.claude/skills/` |
+
+```
+使用者層（~/.claude/）     ← Superpowers、skills 裝在這
+  └── 所有專案共享，裝一次就好
+
+專案層（./）               ← ASP 裝在這
+  └── 每個 repo 各自有
+```
+
+> ASP 本身**不依賴**上述工具，可單獨使用。
+
+---
+
 ## 快速安裝
 
 ```bash
-curl -sSL https://raw.githubusercontent.com/YOUR_USERNAME/ai-sop-protocol/main/scripts/install.sh | bash
+curl -sSL https://raw.githubusercontent.com/astroicers/AI-SOP-Protocol/main/scripts/install.sh | bash
 ```
 
 或手動複製：
