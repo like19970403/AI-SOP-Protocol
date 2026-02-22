@@ -1,5 +1,7 @@
 # System Development Profile
 
+> 載入條件：`type: system` 或 `type: architecture`
+
 適用：後端服務、微服務、Kubernetes、Docker、API 開發。
 
 ---

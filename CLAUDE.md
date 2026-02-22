@@ -83,3 +83,5 @@ name:      your-project-name
 | 查詢知識庫 | `make rag-search Q="..."` |
 | Agent 完成回報 | `make agent-done TASK=xxx STATUS=success` |
 | 儲存 Session | `make session-checkpoint NEXT="..."` |
+
+> 以上為常用指令，完整列表請執行 `make help`

@@ -107,6 +107,12 @@ EOF
 
 echo "✅ 已建立 .ai_profile"
 
+# 更新 Makefile APP_NAME
+if [ -f "Makefile" ] && grep -q "APP_NAME ?= app-service" Makefile; then
+    SED_INPLACE "s/APP_NAME ?= app-service/APP_NAME ?= ${PROJECT_NAME}/" Makefile
+    echo "✅ 已更新 Makefile APP_NAME → ${PROJECT_NAME}"
+fi
+
 # 初始化 ADR-001（若不存在）
 if ! ls docs/adr/ADR-001-*.md &>/dev/null 2>&1; then
     ADR_FILE="docs/adr/ADR-001-initial-technology-stack.md"
