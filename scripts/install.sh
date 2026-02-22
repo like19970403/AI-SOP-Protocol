@@ -61,7 +61,20 @@ mkdir -p docs/adr docs/specs
 # 複製核心檔案
 if git ls-remote "$PROTOCOL_REPO" &>/dev/null 2>&1; then
     git clone --depth=1 "$PROTOCOL_REPO" "$PROTOCOL_DIR" 2>/dev/null
-    cp "$PROTOCOL_DIR/CLAUDE.md" ./CLAUDE.md
+    if [ -f "CLAUDE.md" ]; then
+        if grep -q "AI-SOP-Protocol" CLAUDE.md; then
+            echo "ℹ️  CLAUDE.md 已包含 ASP 引用，跳過"
+        else
+            cp CLAUDE.md CLAUDE.md.pre-asp
+            { printf '# AI-SOP-Protocol (ASP) — 行為憲法\n\n'; \
+              printf '> 本專案遵循 ASP 協議。讀取順序：本區塊 → `.ai_profile` → 對應 profiles（按需）\n'; \
+              printf '> 鐵則與 Profile 對應表請見：profiles/global_core.md\n\n---\n\n'; \
+              cat CLAUDE.md; } > CLAUDE.md.tmp && mv CLAUDE.md.tmp CLAUDE.md
+            echo "⚠️  已在現有 CLAUDE.md 頂部插入 ASP 引用（原檔備份於 CLAUDE.md.pre-asp）"
+        fi
+    else
+        cp "$PROTOCOL_DIR/CLAUDE.md" ./CLAUDE.md
+    fi
     cp -r "$PROTOCOL_DIR/profiles" ./profiles
     cp -r "$PROTOCOL_DIR/templates" ./templates
     cp -r "$PROTOCOL_DIR/scripts" ./scripts
