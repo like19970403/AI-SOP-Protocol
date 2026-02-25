@@ -141,10 +141,13 @@ if [ "$IS_DELETION" = true ]; then
 fi
 
 # --- 決策矩陣 ---
-# 注意：permissionDecision: "ask" 在 VSCode Extension 中被靜默忽略（GitHub #13339）
-# 改用 "deny" 確保 CLI 與 VSCode 皆有效
+# 雙保險攔截：JSON deny + exit 2（Belt-and-Suspenders）
+# - JSON deny: 部分環境/版本有效（GitHub #3514: deny 有時不阻止執行）
+# - exit 2 + stderr: 官方文件記載的阻止方式，對 Edit/Write 工具也有效
+# - "ask" 在 VSCode Extension 中被靜默忽略（GitHub #13339），故使用 "deny"
 deny_with_reason() {
     local reason="$1"
+    # 方式 1: JSON deny（stdout）
     jq -n --arg reason "$reason" '{
         hookSpecificOutput: {
             hookEventName: "PreToolUse",
@@ -152,7 +155,9 @@ deny_with_reason() {
             permissionDecisionReason: $reason
         }
     }'
-    exit 0
+    # 方式 2: stderr + exit 2（fallback，最可靠的阻止方式）
+    echo "$reason" >&2
+    exit 2
 }
 
 SHORT_PATH=$(echo "$FILE_PATH" | sed "s|.*/\(.*/.*/.*\)|\1|")

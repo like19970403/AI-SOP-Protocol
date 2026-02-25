@@ -18,17 +18,23 @@ COMMAND=$(echo "$INPUT" | jq -r '.tool_input.command // empty')
 
 [ -z "$COMMAND" ] && exit 0
 
-# 共用：輸出 deny JSON 並退出（deny 在 CLI 與 VSCode 皆有效）
-# 注意：permissionDecision: "ask" 在 VSCode Extension 中被靜默忽略（GitHub #13339）
+# 雙保險攔截：JSON deny + exit 2（Belt-and-Suspenders）
+# - JSON deny: 部分環境/版本有效（GitHub #3514: deny 有時不阻止執行）
+# - exit 2 + stderr: 官方文件記載的阻止方式，對 Bash 工具最可靠
+# - "ask" 在 VSCode Extension 中被靜默忽略（GitHub #13339），故使用 "deny"
 deny() {
-    jq -n --arg reason "$1" '{
+    local reason="$1"
+    # 方式 1: JSON deny（stdout）
+    jq -n --arg reason "$reason" '{
         hookSpecificOutput: {
             hookEventName: "PreToolUse",
             permissionDecision: "deny",
             permissionDecisionReason: $reason
         }
     }'
-    exit 0
+    # 方式 2: stderr + exit 2（fallback，最可靠的阻止方式）
+    echo "$reason" >&2
+    exit 2
 }
 
 # --- 部署指令（含檢查清單）---

@@ -101,4 +101,5 @@ ASP 使用 Claude Code Hooks 技術強制執行鐵則，不依賴 AI 自律：
 
 > Hooks 使用 `permissionDecision: "deny"`（阻止工具執行並回報原因）。
 > `"ask"` 在 VSCode Extension 中被靜默忽略（[GitHub #13339](https://github.com/anthropics/claude-code/issues/13339)），故改用 `"deny"` 確保跨環境一致。
+> 額外使用 `exit 2` + stderr 作為 fallback（雙保險策略），應對 `deny` 有時不阻止執行的問題（[GitHub #3514](https://github.com/anthropics/claude-code/issues/3514)）。
 > 設定檔位於 `.claude/settings.json`，hook 腳本位於 `.asp/hooks/`。
