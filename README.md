@@ -89,7 +89,7 @@ name: your-project
 
 | 等級 | 行為 |
 |------|------|
-| `minimal` | 僅攔截副作用（git push、deploy、rm -rf） |
+| `minimal` | 僅攔截副作用（deploy、merge、rebase、rm -rf） |
 | `standard` | + 原始碼修改需確認 + SPEC 存在性檢查 |
 | `strict` | + 所有檔案修改均需確認（含測試、文件） |
 
@@ -183,7 +183,7 @@ your-project/
 │
 ├── .asp/                        # ← ASP 所有靜態檔案收在這裡
 │   ├── hooks/
-│   │   ├── enforce-side-effects.sh  # 副作用攔截（git push, deploy, rm -rf）
+│   │   ├── enforce-side-effects.sh  # 副作用攔截（deploy, merge, rebase, rm -rf, kubectl, docker push）
 │   │   └── enforce-workflow.sh      # 工作流斷點（依 HITL 等級）
 │   ├── profiles/
 │   │   ├── global_core.md       # 全域準則（所有專案必載）
@@ -276,11 +276,12 @@ ASP 不只靠提示詞約束 AI——鐵則由 **Claude Code Hooks** 技術強�
 
 | Hook | 攔截對象 | 行為 |
 |------|---------|------|
-| `enforce-side-effects.sh` | git push/merge/rebase、helm/kubectl、docker push、rm -rf、deploy | 彈出確認對話框 |
-| `enforce-workflow.sh` | 原始碼修改（依 HITL 等級）、敏感模組、共用介面、刪除操作 | 彈出確認對話框 + SPEC 存在性檢查 |
+| `enforce-side-effects.sh` | deploy、merge/rebase、helm/kubectl、docker push、rm -rf | deny 阻止執行，告知原因 |
+| `enforce-workflow.sh` | 原始碼修改（依 HITL 等級）、敏感模組、共用介面、刪除操作 | deny 攔截 + SPEC 存在性檢查 |
 
-> Hooks 使用 `permissionDecision: "ask"`——人類始終可以覆蓋。
-> 這不是限制，而是安全網。
+> Hooks 使用 `permissionDecision: "deny"` + `exit 2` 雙保險攔截（[GitHub #3514](https://github.com/anthropics/claude-code/issues/3514)）。
+> `git push` 不由 hook 攔截，改由 Claude Code 內建權限系統處理（VSCode 中顯示 GUI 確認框）。
+> 原因：hook `"ask"` 在 VSCode 中被忽略（[#13339](https://github.com/anthropics/claude-code/issues/13339)），`"deny"` 會截斷對話。
 
 **注意**：`settings.local.json` 的 `permissions.allow` 萬用規則（如 `Bash(make:*)`）會繞過 Hooks。
 確保 local 設定中不包含會自動放行危險指令的 wildcard pattern。
