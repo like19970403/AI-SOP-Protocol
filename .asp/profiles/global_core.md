@@ -13,15 +13,15 @@
 
 ---
 
-## 副作用防護
+## 破壞性操作防護
 
-以下操作執行前，必須列出完整計畫並等待 `Y` / `Confirm`：
+以下操作由 Claude Code 內建權限系統確認，`git push` 前另需列出變更摘要並等待人類明確同意：
 
 ```
 git rebase          # 內建權限系統確認（SessionStart hook 清理 allow list）
 docker push/deploy  # 內建權限系統確認（SessionStart hook 清理 allow list）
 rm -r* / find -delete  # 內建權限系統確認（SessionStart hook 清理 allow list）
-git push            # 內建權限系統確認（SessionStart hook 清理 allow list）
+git push            # 內建權限系統確認 + 必須先列出變更摘要並等待人類同意
 ```
 
 > **技術執行**：Claude Code 內建權限系統對不在 allow list 的指令彈出「Allow this bash command?」確認框。
