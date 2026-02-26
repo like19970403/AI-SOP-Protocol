@@ -42,7 +42,7 @@ name:      your-project-name
 
 | 鐵則 | 說明 |
 |------|------|
-| **副作用防護** | `deploy / rm -rf / merge / rebase` 由 Hooks 技術強制攔截；`git push` 由內建權限系統確認 |
+| **副作用防護** | `rebase / rm -rf / docker push / git push` 等危險操作由 Claude Code 內建權限系統確認（SessionStart hook 自動清理 allow list） |
 | **不擅自推版** | 禁止未經人類明確同意執行 `git push`；必須先列出變更摘要並等待人類確認 |
 | **敏感資訊保護** | 禁止輸出任何 API Key、密碼、憑證，無論何種包裝方式 |
 | **Makefile 優先** | 有對應 make 目標時，禁止輸出原生長指令 |
@@ -57,7 +57,7 @@ name:      your-project-name
 | TDD：測試先於代碼 | 原型驗證階段，需標記 `tech-debt: test-pending` |
 | 非 trivial Bug 修復需建 SPEC | trivial（單行/typo/配置）可豁免，需說明理由 |
 | 文件同步更新 | 緊急修復可延後，但必須在 24h 內補文件 |
-| SPEC 先於原始碼修改 | trivial（單行/typo/配置）可豁免，需說明理由（由 Hook 技術提醒） |
+| SPEC 先於原始碼修改 | trivial（單行/typo/配置）可豁免，需說明理由 |
 | Bug 修復後 grep 全專案 | 確認為單點配置錯誤時可豁免 |
 
 ---
@@ -90,16 +90,14 @@ name:      your-project-name
 
 ---
 
-## 技術執行層（Hooks）
+## 技術執行層（Hooks + 內建權限）
 
-ASP 使用 Claude Code Hooks 技術強制執行鐵則，不依賴 AI 自律：
+ASP 使用 Claude Code 內建權限系統 + SessionStart Hook 保護危險操作：
 
-| Hook | 攔截對象 | 行為 |
-|------|---------|------|
-| `enforce-side-effects.sh` | deploy, rm -rf, merge, rebase, kubectl, docker push | deny 阻止執行，告知原因 |
-| `enforce-workflow.sh` | 原始碼修改（Edit/Write） | 依 HITL 等級 deny 攔截 + SPEC 存在性檢查 |
+| 機制 | 說明 |
+|------|------|
+| **內建權限系統** | 危險指令（git push/rebase, docker push, rm -rf 等）不在 allow list 中時，Claude Code 自動彈出「Allow this bash command?」確認框 |
+| **SessionStart Hook** | `clean-allow-list.sh` 每次 session 啟動時自動清理 allow list 中的危險規則，確保內建權限系統持續生效 |
 
-> Hooks 使用 `permissionDecision: "deny"` + `exit 2` 雙保險攔截（[GitHub #3514](https://github.com/anthropics/claude-code/issues/3514)）。
-> `git push` 不由 hook 攔截，改由 Claude Code 內建權限系統處理（VSCode 中顯示 GUI 確認框）。
-> 原因：hook `"ask"` 在 VSCode 中被忽略（[#13339](https://github.com/anthropics/claude-code/issues/13339)），`"deny"` 會截斷對話。
 > 設定檔位於 `.claude/settings.json`，hook 腳本位於 `.asp/hooks/`。
+> 使用者可在確認框中選擇 "Allow"（一次性）或 "Always allow"（永久），但後者會在下次 session 啟動時被自動清理。

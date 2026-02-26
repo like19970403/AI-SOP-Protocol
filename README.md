@@ -46,7 +46,7 @@ curl -sSL https://raw.githubusercontent.com/astroicers/AI-SOP-Protocol/main/.asp
 
 安裝腳本會自動：
 - 複製 `CLAUDE.md`、`.asp/`、`Makefile`、`.gitignore`
-- 建立 `.claude/settings.json` 並註冊 Hooks（若已存在會合併）
+- 建立 `.claude/settings.json` 並註冊 SessionStart Hook（若已存在會合併）
 - 舊版 ASP（profiles 散落在根目錄）會自動遷移至 `.asp/`
 
 或手動複製：
@@ -54,7 +54,7 @@ curl -sSL https://raw.githubusercontent.com/astroicers/AI-SOP-Protocol/main/.asp
 ```bash
 cp CLAUDE.md /your-project/
 cp -r .asp/ /your-project/.asp/
-cp -r .claude/ /your-project/.claude/  # Hooks 設定
+cp -r .claude/ /your-project/.claude/  # SessionStart Hook 設定
 cp Makefile /your-project/             # 若無衝突
 cp .gitignore /your-project/           # 若無衝突
 ```
@@ -85,15 +85,15 @@ name: your-project
 
 ### HITL 等級（Human-in-the-Loop）
 
-`hitl` 控制 Hooks 攔截的粒度：
+`hitl` 控制 AI 自律行為的粒度（由 Profile 定義，AI 自行遵循）：
 
 | 等級 | 行為 |
 |------|------|
-| `minimal` | 僅攔截副作用（deploy、merge、rebase、rm -rf） |
-| `standard` | + 原始碼修改需確認 + SPEC 存在性檢查 |
-| `strict` | + 所有檔案修改均需確認（含測試、文件） |
+| `minimal` | 僅對副作用操作主動說明「等待確認」 |
+| `standard` | + 原始碼修改前確認 SPEC 存在性 |
+| `strict` | + 所有檔案修改前主動暫停確認 |
 
-> 無論 HITL 等級為何，auth/crypto/security 模組、共用介面（.proto/.graphql）、刪除操作**一律攔截**。
+> 危險操作（git push/rebase、docker push、rm -rf 等）由 Claude Code 內建權限系統彈出確認框，不依賴 HITL 等級。
 
 ---
 
@@ -179,12 +179,11 @@ your-project/
 ├── .gitignore
 │
 ├── .claude/
-│   └── settings.json            # Hook 註冊（install.sh 自動建立）
+│   └── settings.json            # SessionStart Hook 設定（install.sh 自動建立）
 │
 ├── .asp/                        # ← ASP 所有靜態檔案收在這裡
 │   ├── hooks/
-│   │   ├── enforce-side-effects.sh  # 副作用攔截（deploy, merge, rebase, rm -rf, kubectl, docker push）
-│   │   └── enforce-workflow.sh      # 工作流斷點（依 HITL 等級）
+│   │   └── clean-allow-list.sh     # SessionStart hook（清理危險 allow 規則）
 │   ├── profiles/
 │   │   ├── global_core.md       # 全域準則（所有專案必載）
 │   │   ├── system_dev.md        # 系統開發（ADR/TDD/Docker）
@@ -199,7 +198,7 @@ your-project/
 │   │   ├── SPEC_Template.md
 │   │   └── architecture_spec.md
 │   ├── scripts/
-│   │   ├── install.sh           # 一鍵安裝（含 Hooks 設定）
+│   │   ├── install.sh           # 一鍵安裝（含 SessionStart Hook 設定）
 │   │   └── rag/
 │   │       ├── build_index.py   # 建立向量索引
 │   │       ├── search.py        # 查詢知識庫
@@ -244,7 +243,7 @@ Profiles 使用分層混合的表達格式，依內容性質選用最適合的�
 |------|------|------|
 | 設計哲學 | 自然語言 | CLAUDE.md 鐵則、profiles 開頭說明 |
 | 決策流程 | **Pseudocode** | guardrail 三層策略、HITL 暫停矩陣、RAG 查詢 |
-| 技術執行 | Bash / Make | enforce-workflow.sh、Makefile |
+| 技術執行 | Bash / Make | clean-allow-list.sh、Makefile |
 | 靜態規則 | 表格 / YAML | ADR 分類、模型選擇、排版規範 |
 
 Pseudocode 語法慣例：
@@ -263,28 +262,25 @@ FUNCTION name(params):        // 決策流程入口
 
 ---
 
-## 技術強制層（Hooks）
+## 技術強制層（Hooks + 內建權限）
 
-ASP 不只靠提示詞約束 AI——鐵則由 **Claude Code Hooks** 技術強制執行。
+ASP 使用 Claude Code **內建權限系統** + **SessionStart Hook** 保護危險操作：
 
 ```
 .claude/settings.json
-  └── PreToolUse hooks
-        ├── Bash  → enforce-side-effects.sh  （攔截危險指令）
-        └── Edit|Write → enforce-workflow.sh  （工作流斷點）
+  └── SessionStart hook → clean-allow-list.sh（清理 allow list）
+
+每次 session 啟動 → 自動清理 allow list 中的危險規則
+  → 危險指令不在 allow list → 內建權限系統彈出「Allow this bash command?」確認框
 ```
 
-| Hook | 攔截對象 | 行為 |
-|------|---------|------|
-| `enforce-side-effects.sh` | deploy、merge/rebase、helm/kubectl、docker push、rm -rf | deny 阻止執行，告知原因 |
-| `enforce-workflow.sh` | 原始碼修改（依 HITL 等級）、敏感模組、共用介面、刪除操作 | deny 攔截 + SPEC 存在性檢查 |
+| 機制 | 說明 |
+|------|------|
+| **內建權限系統** | 危險指令（git push/rebase, docker push, rm -rf 等）不在 allow list 中時，Claude Code 自動彈出確認框 |
+| **SessionStart Hook** | `clean-allow-list.sh` 每次 session 啟動時自動清理 allow list 中的危險規則，確保內建權限系統持續生效 |
 
-> Hooks 使用 `permissionDecision: "deny"` + `exit 2` 雙保險攔截（[GitHub #3514](https://github.com/anthropics/claude-code/issues/3514)）。
-> `git push` 不由 hook 攔截，改由 Claude Code 內建權限系統處理（VSCode 中顯示 GUI 確認框）。
-> 原因：hook `"ask"` 在 VSCode 中被忽略（[#13339](https://github.com/anthropics/claude-code/issues/13339)），`"deny"` 會截斷對話。
-
-**注意**：`settings.local.json` 的 `permissions.allow` 萬用規則（如 `Bash(make:*)`）會繞過 Hooks。
-確保 local 設定中不包含會自動放行危險指令的 wildcard pattern。
+> 使用者可在確認框中選擇 "Allow"（一次性）或 "Always allow"（永久），但後者會在下次 session 啟動時被自動清理。
+> 設定檔位於 `.claude/settings.json`，hook 腳本位於 `.asp/hooks/`。
 
 ---
 
@@ -292,7 +288,7 @@ ASP 不只靠提示詞約束 AI——鐵則由 **Claude Code Hooks** 技術強�
 
 **從「規則替代判斷」到「規則賦能判斷」；從「提示詞約束」到「技術強制」。**
 
-- 鐵則（不可繞過）只有 4 條，由 Hooks 技術強制，不依賴 AI 自律
+- 鐵則（不可繞過）只有 4 條，由內建權限系統 + SessionStart Hook 技術輔助
 - 預設值可跳過，但必須說明理由——這讓 Claude 學會判斷，而不只是服從
 - 護欄預設「詢問與引導」，不是「拒絕」
 - 一條有條件的規則，勝過三條無條件的規則
