@@ -1,5 +1,75 @@
+# CLAUDE.md
+
+本檔案為 Claude Code (claude.ai/code) 在此 repository 工作時的指引。
+
+---
+
+## 關於本 Repository
+
+AI-SOP-Protocol (ASP) 是 AI 編程助手的行為憲法框架。將開發文化（ADR 先於實作、TDD、文件同步、破壞性操作防護）編碼為機器可讀的約束，讓 Claude Code 自動遵守。ASP 規範的是**怎麼做**（流程），不管**做什麼**（產品方向）。
+
+**本 repo 就是 ASP 框架本身。** 這裡的檔案（CLAUDE.md、Makefile、profiles、hooks、install.sh）會被安裝到目標專案中。修改時請記住：你改的是會發佈給使用者的模板。
+
+版本號位於 `.asp/VERSION`（semver）。Makefile 頂部有獨立版本標記 `ASP_MAKEFILE_VERSION`。
+
+## 開發指令
+
+本 repo 沒有自己的建置系統或測試套件。Makefile 是給目標專案用的**模板**（多語言：依序嘗試 Go、Python、Node）。
+
+```bash
+# 驗證 install 腳本語法
+bash -n .asp/scripts/install.sh
+
+# 驗證 hook 腳本語法
+bash -n .asp/hooks/clean-allow-list.sh
+
+# 在暫存目錄乾跑安裝
+mkdir /tmp/asp-test && cd /tmp/asp-test && git init && bash /path/to/install.sh
+```
+
+Commit 遵循 conventional-commits：`feat:`、`fix:`、`refactor:`、`chore:`、`docs:`。
+
+## 架構
+
+### 分層 Profile 系統
+
+Profile 是可組合的分層，由目標專案中的 `.ai_profile` YAML 選擇載入：
+
+```
+第 1 層：鐵則（CLAUDE.md）                    — 永遠載入，不可覆蓋
+第 2 層：全域準則（global_core.md）             — 所有專案類型必載
+第 3 層：專案類型（system_dev.md 或 content_creative.md）
+第 4 層：作業模式（multi_agent.md 或 committee.md）— 可選
+第 5 層：開發策略（vibe_coding.md）              — 可選
+第 6 層：選配（rag_context.md、guardrail.md、coding_style.md、openapi.md）— 可選
+```
+
+Profile 對應由 `.ai_profile` 欄位驅動 → 見下方 Profile 對應表。
+
+### 關鍵檔案
+
+| 檔案 | 用途 |
+|------|------|
+| `.asp/scripts/install.sh` | 一鍵安裝腳本（457 行）。處理全新安裝、升級、舊版遷移、settings.json 合併、.gitignore 合併。支援非互動模式（環境變數 `ASP_TYPE`、`ASP_NAME`、`ASP_RAG`、`ASP_GUARDRAIL`、`ASP_HITL`）。 |
+| `.asp/hooks/clean-allow-list.sh` | SessionStart hook。用 `jq` 從 `.claude/settings.local.json` 移除危險 Bash allow 規則。匹配模式：`git rebase/push`、`docker push/deploy`、`rm -r*`、`find -delete`。 |
+| `.asp/profiles/` | 10 個 profile 檔，使用混合表達：自然語言（哲學）、pseudocode（`FUNCTION/IF/MATCH/INVARIANT` 決策邏輯）、bash/make（技術執行）、表格/YAML（靜態規則）。 |
+| `.asp/templates/` | ADR、SPEC、架構模板 + 預設 `.ai_profile`（`.system`、`.content`、`.full`）。 |
+| `.asp/scripts/rag/` | 可選 RAG 支援：ChromaDB + sentence-transformers 索引建立、搜尋、統計。 |
+| `Makefile` | 發佈到目標專案的模板 Makefile，版本與 ASP 版本獨立管理。 |
+
+### 修改時須遵守的設計原則
+
+- **鐵則只有 3 條**——技術強制，永遠不能多加。「一條有條件的規則，勝過三條無條件的規則。」
+- **預設行為可跳過但須說明理由**——教 AI 學會判斷，而非只是服從。
+- **Token 經濟**——shell 指令超過 3 行就移入 Makefile；RAG 模式存在是為了避免把所有 profile 塞進 context；content 類型專案跳過所有 Docker/TDD/CI 邏輯。
+- **SessionStart hook + 內建權限**（v1.3+ 作法）取代 PreToolUse hooks（v1.1-v1.2）。更簡單、更可靠。
+- **install.sh 必須防禦性編寫**——處理既有 CLAUDE.md、既有 Makefile（保留 APP_NAME）、既有 .ai_profile（只補缺漏欄位）、舊版目錄清理。
+
+---
+
 # AI-SOP-Protocol (ASP) — 行為憲法
 
+> 以下是 ASP 核心協議，會被安裝到目標專案中。
 > 讀取順序：本檔案 → `.ai_profile` → 對應 `.asp/profiles/`（按需）
 
 ---
@@ -16,9 +86,11 @@ type:      system | content | architecture   # 必填
 mode:      single | multi-agent | committee  # 預設 single
 workflow:  standard | vibe-coding            # 預設 standard
 rag:       enabled | disabled               # 預設 disabled
-guardrail: enabled | disabled               # 預設 disabled
-hitl:      minimal | standard | strict      # 預設 standard
-name:      your-project-name
+guardrail:    enabled | disabled               # 預設 disabled
+coding_style: enabled | disabled               # 預設 disabled
+openapi:      enabled | disabled               # 預設 disabled
+hitl:         minimal | standard | strict      # 預設 standard
+name:         your-project-name
 ```
 
 **Profile 對應表：**
@@ -33,6 +105,8 @@ name:      your-project-name
 | `workflow: vibe-coding` | + `.asp/profiles/vibe_coding.md` |
 | `rag: enabled` | + `.asp/profiles/rag_context.md` |
 | `guardrail: enabled` | + `.asp/profiles/guardrail.md` |
+| `coding_style: enabled` | + `.asp/profiles/coding_style.md` |
+| `openapi: enabled` | + `.asp/profiles/openapi.md` |
 
 ---
 
