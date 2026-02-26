@@ -1,5 +1,7 @@
 # AI-SOP-Protocol (ASP)
 
+> Fork 自 [astroicers/AI-SOP-Protocol](https://github.com/astroicers/AI-SOP-Protocol)
+
 > 把開發文化寫成機器可讀的約束，讓 AI 自動遵守。
 
 不需要每次都提醒 AI「記得寫測試」「不要亂推版」「更新文件」。
@@ -41,7 +43,7 @@ ASP **不管你做什麼**。產品方向、功能優先序、時程規劃不在
 ## 快速安裝
 
 ```bash
-curl -sSL https://raw.githubusercontent.com/astroicers/AI-SOP-Protocol/main/.asp/scripts/install.sh | bash
+curl -sSL https://raw.githubusercontent.com/like19970403/AI-SOP-Protocol/main/.asp/scripts/install.sh | bash
 ```
 
 安裝腳本會自動：
@@ -78,8 +80,10 @@ type: system          # system | content | architecture
 mode: single          # single | multi-agent | committee
 workflow: standard    # standard | vibe-coding
 rag: disabled         # enabled | disabled
-guardrail: disabled   # enabled | disabled
-hitl: standard        # minimal | standard | strict
+guardrail: disabled    # enabled | disabled
+coding_style: disabled # enabled | disabled
+openapi: disabled      # enabled | disabled
+hitl: standard         # minimal | standard | strict
 name: your-project
 ```
 
@@ -196,7 +200,9 @@ your-project/
 │   │   ├── committee.md         # 角色委員會（決策期辯論）
 │   │   ├── vibe_coding.md       # 規格驅動工作流
 │   │   ├── rag_context.md       # Local RAG 整合
-│   │   └── guardrail.md         # 範疇限制與敏感資訊保護
+│   │   ├── guardrail.md         # 範疇限制與敏感資訊保護
+│   │   ├── coding_style.md     # 通用編碼風格規範
+│   │   └── openapi.md          # API 設計規範與 API-First 工作流
 │   ├── templates/
 │   │   ├── ADR_Template.md
 │   │   ├── SPEC_Template.md
@@ -230,7 +236,7 @@ your-project/
   ↓ 依 .ai_profile mode 載入（可選）
 開發策略 Profile（vibe-coding）
   ↓ 依 .ai_profile workflow 載入（可選）
-選配 Profile（rag / guardrail）
+選配 Profile（rag / guardrail / coding_style / openapi）
   ↓ 依 .ai_profile 各欄位載入（可選）
 ```
 
