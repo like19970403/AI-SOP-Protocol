@@ -84,7 +84,8 @@ ADR（為什麼）→ SDD（如何設計）→ TDD（驗證標準）→ BDD（�
    └── 檢查 docs/openapi.yaml 是否存在對應 endpoint 定義
        ├── 已存在 → 確認 spec 與需求一致，不一致則先更新 spec
        ├── 不存在 → 先撰寫 OpenAPI spec，經人類確認後再繼續
-       └── SPEC 的 Done When 必須包含「API 回應符合 OpenAPI spec 定義」
+       ├── SPEC 的 Done When 必須包含「API 回應符合 OpenAPI spec 定義」
+       └── 實作完成後更新 docs/api-changelog.md
    // 詳細規範見 openapi.md
 
 5. 回覆格式：

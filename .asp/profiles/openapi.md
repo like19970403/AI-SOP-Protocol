@@ -132,6 +132,11 @@ FUNCTION openapi_gate(requirement, openapi_spec_path = "docs/openapi.yaml"):
       fallback = "若 spec 有誤，先更新 spec 再修正實作"
     )
 
+  // ─── 第 4 步：更新變更紀錄 ───
+  update_api_changelog("docs/api-changelog.md", requirement)
+  update_openapi_info(openapi_spec_path, latest_change_summary)
+  // openapi.yaml info 區塊只保留最新一筆更新摘要
+
   // ─── 不可違反的約束 ───
   INVARIANT: OpenAPI spec 是 single source of truth
   INVARIANT: 實作與 spec 不一致 = bug，不是 feature
@@ -149,3 +154,80 @@ FUNCTION openapi_gate(requirement, openapi_spec_path = "docs/openapi.yaml"):
 | 修改 API 回應格式 | 視影響範圍 | 是 |
 | 新增 API 版本（v1 → v2） | 是 | 是 |
 | 修正 API bug（非 breaking） | 否 | trivial 可豁免 |
+
+---
+
+## API 變更紀錄規則
+
+### 檔案位置與職責
+
+| 檔案 | 職責 |
+|------|------|
+| `docs/api-changelog.md` | API 專屬變更的完整歷史紀錄（獨立於專案 CHANGELOG.md） |
+| `docs/openapi.yaml` info 區塊 | 只保留最新一筆更新摘要 |
+
+- 只記錄 API 相關變更（endpoint 新增/修改/移除、request/response 格式、錯誤碼等）
+- 專案內部重構、非 API 的 bug 修復等不需要記錄
+
+### 變更分類
+
+| 分類 | 說明 |
+|------|------|
+| **Added** | 新增 endpoint 或參數 |
+| **Changed** | 修改既有行為（含 request/response 格式變更） |
+| **Deprecated** | 即將移除的 endpoint 或參數（標明預計移除時程） |
+| **Removed** | 已移除的 endpoint 或參數 |
+| **Fixed** | API bug 修正 |
+
+### Breaking Change 標記
+
+Breaking change 必須在版本標題加上醒目標記，格式：
+
+```
+## [v1.2.0] - 2025-03-15 ⚠️ BREAKING
+```
+
+Breaking change 的定義：
+- 移除或重新命名 endpoint
+- 移除或重新命名 request/response 欄位
+- 變更欄位型別或必填狀態
+- 變更 HTTP method 或狀態碼語意
+
+### 記錄格式範例
+
+`docs/api-changelog.md` 格式：
+
+```markdown
+# API Changelog
+
+所有 API 相關變更紀錄。格式依循 [Keep a Changelog](https://keepachangelog.com/)。
+
+## [v1.2.0] - 2025-03-15 ⚠️ BREAKING
+
+### Changed
+- `PATCH /users/{id}` — email 欄位改為必填
+
+### Added
+- `GET /users/{id}/preferences` — 新增使用者偏好設定查詢
+
+## [v1.1.0] - 2025-03-01
+
+### Added
+- `POST /orders/{id}/refund` — 新增退款 endpoint
+
+### Fixed
+- `GET /orders` — 修正分頁參數 offset 計算錯誤
+```
+
+`docs/openapi.yaml` info 區塊（只保留最新一筆）：
+
+```yaml
+info:
+  title: Your API
+  version: "1.2.0"
+  description: |
+    最近更新（v1.2.0, 2025-03-15）⚠️ BREAKING:
+    - PATCH /users/{id} email 欄位改為必填
+    - 新增 GET /users/{id}/preferences
+    完整變更紀錄見 docs/api-changelog.md
+```
