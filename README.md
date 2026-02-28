@@ -61,6 +61,21 @@ cp Makefile /your-project/             # 若無衝突
 cp .gitignore /your-project/           # 若無衝突
 ```
 
+### 升級已安裝的專案
+
+在已安裝 ASP 的專案根目錄重跑同一條指令即可：
+
+```bash
+curl -sSL https://raw.githubusercontent.com/like19970403/AI-SOP-Protocol/main/.asp/scripts/install.sh | bash
+```
+
+腳本偵測到 `.asp/VERSION` 後會自動進入升級模式：
+
+- **會更新**：`.asp/profiles`、`.asp/templates`、`.asp/scripts`、`.asp/hooks`、`CLAUDE.md`、`Makefile`
+- **會保留**：`.ai_profile`、`docs/adr/*`、`docs/specs/*`、`docs/architecture.md`
+- **會補充**：`.ai_profile` 中新版新增的欄位（如 `coding_style`、`openapi`）
+- `CLAUDE.md` 更新前會自動備份為 `CLAUDE.md.pre-upgrade`
+
 ---
 
 ## 啟動
