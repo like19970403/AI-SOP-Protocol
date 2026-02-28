@@ -73,7 +73,7 @@ curl -sSL https://raw.githubusercontent.com/like19970403/AI-SOP-Protocol/main/.a
 
 - **會更新**：`.asp/profiles`、`.asp/templates`、`.asp/scripts`、`.asp/hooks`、`CLAUDE.md`、`Makefile`
 - **會保留**：`.ai_profile`、`docs/adr/*`、`docs/specs/*`、`docs/architecture.md`
-- **會補充**：`.ai_profile` 中新版新增的欄位（如 `coding_style`、`openapi`）
+- **會補充**：`.ai_profile` 中新版新增的欄位（如 `coding_style`、`openapi`、`frontend_design`）
 - `CLAUDE.md` 更新前會自動備份為 `CLAUDE.md.pre-upgrade`
 
 ---
@@ -98,6 +98,7 @@ rag: disabled         # enabled | disabled
 guardrail: disabled    # enabled | disabled
 coding_style: disabled # enabled | disabled
 openapi: disabled      # enabled | disabled
+frontend_design: disabled # enabled | disabled
 hitl: standard         # minimal | standard | strict
 name: your-project
 ```
@@ -217,7 +218,8 @@ your-project/
 │   │   ├── rag_context.md       # Local RAG 整合
 │   │   ├── guardrail.md         # 範疇限制與敏感資訊保護
 │   │   ├── coding_style.md     # 通用編碼風格規範
-│   │   └── openapi.md          # API 設計規範與 API-First 工作流
+│   │   ├── openapi.md          # API 設計規範與 API-First 工作流
+│   │   └── frontend_design.md  # Pencil.dev 設計優先工作流
 │   ├── templates/
 │   │   ├── ADR_Template.md
 │   │   ├── SPEC_Template.md
@@ -251,7 +253,7 @@ your-project/
   ↓ 依 .ai_profile mode 載入（可選）
 開發策略 Profile（vibe-coding）
   ↓ 依 .ai_profile workflow 載入（可選）
-選配 Profile（rag / guardrail / coding_style / openapi）
+選配 Profile（rag / guardrail / coding_style / openapi / frontend_design）
   ↓ 依 .ai_profile 各欄位載入（可選）
 ```
 

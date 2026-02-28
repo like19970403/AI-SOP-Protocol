@@ -41,7 +41,7 @@ Profile 是可組合的分層，由目標專案中的 `.ai_profile` YAML 選擇�
 第 3 層：專案類型（system_dev.md 或 content_creative.md）
 第 4 層：作業模式（multi_agent.md 或 committee.md）— 可選
 第 5 層：開發策略（vibe_coding.md）              — 可選
-第 6 層：選配（rag_context.md、guardrail.md、coding_style.md、openapi.md）— 可選
+第 6 層：選配（rag_context.md、guardrail.md、coding_style.md、openapi.md、frontend_design.md）— 可選
 ```
 
 Profile 對應由 `.ai_profile` 欄位驅動 → 見下方 Profile 對應表。
@@ -52,7 +52,7 @@ Profile 對應由 `.ai_profile` 欄位驅動 → 見下方 Profile 對應表。
 |------|------|
 | `.asp/scripts/install.sh` | 一鍵安裝腳本（457 行）。處理全新安裝、升級、舊版遷移、settings.json 合併、.gitignore 合併。支援非互動模式（環境變數 `ASP_TYPE`、`ASP_NAME`、`ASP_RAG`、`ASP_GUARDRAIL`、`ASP_HITL`）。 |
 | `.asp/hooks/clean-allow-list.sh` | SessionStart hook。用 `jq` 從 `.claude/settings.local.json` 移除危險 Bash allow 規則。匹配模式：`git rebase/push`、`docker push/deploy`、`rm -r*`、`find -delete`。 |
-| `.asp/profiles/` | 10 個 profile 檔，使用混合表達：自然語言（哲學）、pseudocode（`FUNCTION/IF/MATCH/INVARIANT` 決策邏輯）、bash/make（技術執行）、表格/YAML（靜態規則）。 |
+| `.asp/profiles/` | 11 個 profile 檔，使用混合表達：自然語言（哲學）、pseudocode（`FUNCTION/IF/MATCH/INVARIANT` 決策邏輯）、bash/make（技術執行）、表格/YAML（靜態規則）。 |
 | `.asp/templates/` | ADR、SPEC、架構模板 + 預設 `.ai_profile`（`.system`、`.content`、`.full`）。 |
 | `.asp/scripts/rag/` | 可選 RAG 支援：ChromaDB + sentence-transformers 索引建立、搜尋、統計。 |
 | `Makefile` | 發佈到目標專案的模板 Makefile，版本與 ASP 版本獨立管理。 |
@@ -89,6 +89,7 @@ rag:       enabled | disabled               # 預設 disabled
 guardrail:    enabled | disabled               # 預設 disabled
 coding_style: enabled | disabled               # 預設 disabled
 openapi:      enabled | disabled               # 預設 disabled
+frontend_design: enabled | disabled            # 預設 disabled
 hitl:         minimal | standard | strict      # 預設 standard
 name:         your-project-name
 ```
@@ -107,6 +108,7 @@ name:         your-project-name
 | `guardrail: enabled` | + `.asp/profiles/guardrail.md` |
 | `coding_style: enabled` | + `.asp/profiles/coding_style.md` |
 | `openapi: enabled` | + `.asp/profiles/openapi.md` |
+| `frontend_design: enabled` | + `.asp/profiles/frontend_design.md` |
 
 ---
 
@@ -138,8 +140,8 @@ name:         your-project-name
 ## 標準工作流
 
 ```
-需求 → [ADR 建立] → SDD 設計 → TDD 測試 → 實作 → 文件同步 → 確認後部署
-         ↑ 架構影響時必須        ↑ 預設行為，可調整
+需求 → [ADR 建立] → [UI 設計] → SDD 設計 → TDD 測試 → 實作 → 文件同步 → 確認後部署
+         ↑ 架構影響時必須  ↑ frontend_design: enabled 時   ↑ 預設行為，可調整
 ```
 
 ---
