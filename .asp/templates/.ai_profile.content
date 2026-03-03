@@ -3,5 +3,8 @@ mode: single
 workflow: standard
 rag: disabled
 guardrail: disabled
+coding_style: disabled
+openapi: disabled
+frontend_design: disabled
 hitl: minimal
 name: your-content-project

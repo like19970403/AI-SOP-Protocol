@@ -3,6 +3,9 @@ mode: multi-agent
 workflow: vibe-coding
 rag: enabled
 guardrail: enabled
+coding_style: enabled
+openapi: enabled
+frontend_design: enabled
 hitl: strict
 name: merak-platform
 
